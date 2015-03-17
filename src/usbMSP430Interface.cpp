@@ -5,7 +5,7 @@
  *	Author: Rostislav Varzar
  */
 
-#include <stdint.h>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,14 +14,15 @@
 #include <errno.h>
 #include <termios.h>
 #include <ctype.h>
-#include <iostream>
 
 #include "usbMSP430Defines.h"
 #include "usbMSP430Interface.h"
 
-volatile uint16_t mper; // Global PWM motor period
-int usb_out_descr; // Input/Output USB device descriptor
-struct termios usb_tty; // Struct for termio parameters, MUST BE GLOBAL!!!
+using namespace std;
+
+volatile uint16_t mper; 	// Global PWM motor period
+int usb_out_descr; 		// Input/Output USB device descriptor
+struct termios usb_tty; 	// Struct for termio parameters, MUST BE GLOBAL!!!
 
 /// Extract number from packet
 uint32_t hex2num(char *string, uint16_t pos, uint16_t numsize)
@@ -58,6 +59,36 @@ void makeReadRegPacket(char *msp_packet, uint8_t dev_addr, uint8_t reg_addr)
 			reg_addr, crc);
 }
 
+/// Function for decoding received packet
+uint32_t decodeReceivedPacket(char *msp_packet
+				, uint8_t &dev_addr
+				, uint8_t &func_code
+				, uint8_t &reg_addr
+				, uint32_t &reg_val)
+{
+	uint8_t crc1 = 0;				// Received cheksum
+	uint8_t crc2 = 0;				// Calculated checksum
+	uint8_t err = 0;				// Error code
+	if (msp_packet[0] != ':')			// Start condition error
+	{
+		return START_ERROR;
+	}
+	if ((strlen(msp_packet) != RECV_PACK_LEN))	// Incorrect packet length
+	{
+		return LENGTH_ERROR;
+	}
+	dev_addr = hex2num(msp_packet, 1, NUM_BYTE);	// Get device address
+	func_code = hex2num(msp_packet, 3, NUM_BYTE);	// Get function
+	reg_addr = hex2num(msp_packet, 5, NUM_BYTE);	// Get register address
+	reg_val = hex2num(msp_packet, 7, NUM_DWORD);	// Get register value
+	crc1 = hex2num(msp_packet, 15, NUM_BYTE);	// Get CRC from packet
+	crc2 = (0xFF - (dev_addr + func_code + reg_addr + uint8_t(reg_val & 0xFF) + uint8_t((reg_val >> 8) & 0xFF) +
+					uint8_t((reg_val >> 16) & 0xFF) + uint8_t((reg_val >> 24) & 0xFF)) + 1) & 0xFF;			// Calculate CRC
+	if (crc1 != crc2)				// Check CRC
+		return CRC_ERROR;
+	return NO_ERROR;				// Return NO ERROR
+}
+
 /// Init USB TTY device
 uint32_t init_USBTTYDevice()
 {
@@ -65,7 +96,7 @@ uint32_t init_USBTTYDevice()
 
 	if (tcgetattr(usb_out_descr, &usb_tty) != 0)
 	{
-		//cout << "Error " << errno << " from tcgetattr: " << strerror(errno);
+		cout << "Error " << errno << " from tcgetattr: " << strerror(errno);
 		return DEVICE_ERROR;
 	}
 
@@ -90,7 +121,7 @@ uint32_t init_USBTTYDevice()
 
 	if (tcsetattr(usb_out_descr, TCSANOW, &usb_tty) != 0)
 	{
-		// qDebug() << "Error " << errno << " from tcsetattr";
+		cout << "Error " << errno << " from tcsetattr";
 		return DEVICE_ERROR;
 	}
 
@@ -108,7 +139,7 @@ uint32_t sendUSBPacket(char *in_msp_packet, char *out_msp_packet)
 
 	if (usb_out_descr < 0)
 	{
-		// qDebug() << "Error device descriptor" << errno << " : " << strerror (errno);
+		cout << "Error device descriptor" << errno << " : " << strerror (errno);
 		return DEVICE_ERROR;
 	}
 
@@ -118,7 +149,7 @@ uint32_t sendUSBPacket(char *in_msp_packet, char *out_msp_packet)
 	n_written = write(usb_out_descr, s1, n_write);
 	if (n_written != strlen(s1))
 	{
-		// qDebug() << "Error writing: " << strerror(errno);
+		cout << "Error writing: " << strerror(errno);
 		return PACKET_ERROR;
 	}
 	tcflush(usb_out_descr, TCOFLUSH);
@@ -134,7 +165,7 @@ uint32_t sendUSBPacket(char *in_msp_packet, char *out_msp_packet)
 
 	if ((n_read != RECV_PACK_LEN) || (tout == TIME_OUT))
 	{
-		// qDebug() << "Error reading: " << strerror(errno);
+		cout << "Error reading: " << strerror(errno);
 		sprintf(out_msp_packet, "\0");
 		return PACKET_ERROR;
 	}
@@ -154,7 +185,7 @@ uint32_t connect_USBMSP()
 	usb_out_descr = open(USB_DEV_NAME, O_RDWR | O_NONBLOCK | O_NDELAY);
 	if (usb_out_descr < 0)
 	{
-		// qDebug() << "Error " << errno << " opening " << USB_DEV_NAME << ": " << strerror (errno);
+		cout << "Error " << errno << " opening " << USB_DEV_NAME << ": " << strerror (errno);
 		return DEVICE_ERROR;
 	}
 
@@ -169,7 +200,7 @@ uint32_t disconnect_USBMSP()
 {
 	if (usb_out_descr < 0)
 	{
-		// qDebug() << "Error device descriptor" << errno << " : " << strerror (errno);
+		cout << "Error device descriptor" << errno << " : " << strerror (errno);
 		return DEVICE_ERROR;
 	}
 	close(usb_out_descr);

@@ -3,10 +3,12 @@
 // Author      : Rostislav Varzar
 // Version     :
 // Copyright   : Free license
-// Description : Hello World in C++, Ansi-style
+// Description : C++, Ansi-style
 //============================================================================
 
 #include <iostream>
+
+#include <pthread.h>
 
 #include "usbMSP430Defines.h"
 #include "usbMSP430Interface.h"
