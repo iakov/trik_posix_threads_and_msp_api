@@ -11,6 +11,12 @@
 /// Start 1 and 2 motors
 void start_motors_12();
 
+/// Init motors 1 and 2
+void init_motors_12();
+
+/// Init analog sensors 1, 2 and 3
+void init_sensors_123();
+
 /// Read data of first sensor
 uint32_t read_sensor_1();
 

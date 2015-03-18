@@ -22,11 +22,20 @@ using namespace std;
 
 int main()
 {
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	// cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 
 	connect_USBMSP();
+	init_motors_12();
+	init_sensors_123();
+	start_motors_12();
+
+	cout << "Sensor1 value: " << read_sensor_1() << endl;
+	cout << "Sensor2 value: " << read_sensor_2() << endl;
+	cout << "Sensor3 value: " << read_sensor_3() << endl;
 
 
+
+	stop_motors_12();
 	disconnect_USBMSP();
 
 	return 0;
