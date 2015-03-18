@@ -4,14 +4,17 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/access_devices.cpp \
 ../src/trik_posix_threads_2.cpp \
 ../src/usbMSP430Interface.cpp 
 
 OBJS += \
+./src/access_devices.o \
 ./src/trik_posix_threads_2.o \
 ./src/usbMSP430Interface.o 
 
 CPP_DEPS += \
+./src/access_devices.d \
 ./src/trik_posix_threads_2.d \
 ./src/usbMSP430Interface.d 
 
