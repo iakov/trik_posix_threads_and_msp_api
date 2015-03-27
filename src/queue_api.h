@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#define NODE_ABSENT	0
+#define NODE_PRESENT	1
+
 // Queue node
 struct queue_node
 {
@@ -30,5 +33,8 @@ void clean_queue();
 
 // View elements of queue
 void view_queue();
+
+// Find nodes in queue by id and return number of nodes
+uint32_t find_node_by_thread(pthread_t th_id);
 
 #endif /* QUEUE_API_H_ */

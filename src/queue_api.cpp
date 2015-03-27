@@ -53,6 +53,18 @@ queue_node pop_node()
 	return aaa;
 }
 
+// Find nodes in queue by id and return number of nodes
+uint32_t find_node_by_thread(pthread_t th_id)
+{
+	uint32_t retpos = NODE_ABSENT;
+	for (queue_node *qqq = QuFirst; qqq != NULL; qqq = qqq->next)
+	{
+		if (qqq->thread_id == th_id)
+			retpos ++;
+	}
+	return retpos;
+}
+
 // Clean whole queue
 void clean_queue()
 {
@@ -66,5 +78,4 @@ void view_queue()
 {
 	for (queue_node *qqq = QuFirst; qqq != NULL; qqq = qqq->next)
 		cout << qqq->thread_data << " " << qqq->thread_id << endl;
-
 }
