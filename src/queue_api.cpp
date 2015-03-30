@@ -7,10 +7,6 @@
 
 #include <iostream>
 
-#include <stdint.h>
-#include <pthread.h>
-#include <unistd.h>
-
 #include "queue_api.h"
 
 using namespace std;

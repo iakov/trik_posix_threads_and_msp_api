@@ -17,11 +17,9 @@
 #include "usbMSP430Interface.h"
 #include "access_devices.h"
 #include "queue_api.h"
+#include "mess_module.h"
 
 using namespace std;
-
-#define MAXTIMEOUT	1024
-#define ERRORTOUT	0xFFFFFFFF
 
 char end_flag = 0; // End flag for threads
 uint32_t cnt1 = 0; // Counter for first sensor
@@ -32,34 +30,11 @@ pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER; // Mutex to lock thread
 
 pthread_t first_sensor, second_sensor, third_sensor, test_thread;
 
-// Send message (32 bit number) to another thread
-void thread_send(uint32_t message, pthread_t threadID)
+// Delay approx 1 second
+void myDelay()
 {
-	push_node(message,threadID);
-}
-
-// Receive message from another thread
-uint32_t thread_receive(pthread_t selfID)
-{
-	queue_node tmp_node;
-	uint32_t timeout = 0;
-	do
-	{
-		tmp_node = pop_node();
-		if (tmp_node.thread_id != selfID)
-			push_node(tmp_node.thread_data, tmp_node.thread_id);
-		timeout ++;
-	} while ((tmp_node.thread_id != selfID) && (timeout < MAXTIMEOUT));
-	if (timeout >= MAXTIMEOUT)
-		return ERRORTOUT;
-	else
-		return tmp_node.thread_data;
-}
-
-// Returns number of messages in queue
-uint32_t thread_number_messages(pthread_t selfID)
-{
-	return find_node_by_thread(selfID);
+	for (uint32_t d = 0; d < 5000000; d++)
+		uint32_t a = d - d + d;
 }
 
 // Thread that reads first sensor
@@ -77,7 +52,7 @@ void reading_first_sensor()
 			cnt1 ++;
 			cout << "First sensor signal, " << cnt1 << " Thread ID: " << pthread_self() << endl;
 		}
-		if (thread_number_messages(pthread_self()))
+		if (thread_get_number_messages(pthread_self()))
 			cout << "First thread received message: " << thread_receive(pthread_self()) << endl;
 		pthread_mutex_unlock(&mutex1);
 	}
@@ -98,7 +73,7 @@ void reading_second_sensor()
 			cnt2 ++;
 			cout << "Second second signal, " << cnt2 << " Thread ID: " << pthread_self() << endl;
 		}
-		if (thread_number_messages(pthread_self()))
+		if (thread_get_number_messages(pthread_self()))
 			cout << "Second thread received message: " << thread_receive(pthread_self()) << endl;
 		pthread_mutex_unlock(&mutex1);
 	}
@@ -119,7 +94,7 @@ void reading_third_sensor()
 			cnt3 ++;
 			cout << "Third third signal, " << cnt3 << " Thread ID: " << pthread_self() << endl;
 		}
-		if (thread_number_messages(pthread_self()))
+		if (thread_get_number_messages(pthread_self()))
 			cout << "Third thread received message: " << thread_receive(pthread_self()) << endl;
 		pthread_mutex_unlock(&mutex1);
 	}
@@ -132,17 +107,15 @@ void test_messages_thread()
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	while (end_flag == 0)
 	{
-		for (uint32_t d = 0; d < 10000000; d++)
-			uint32_t a = d - d + d;
+		myDelay();
 
 		pthread_mutex_lock(&mutex1);
 			thread_send(111, first_sensor);
-			thread_send(111, first_sensor);
-			thread_send(111, first_sensor);
+			thread_send(777, first_sensor);
+			thread_send(888, first_sensor);
 		pthread_mutex_unlock(&mutex1);
 
-		for (uint32_t d = 0; d < 10000000; d++)
-			uint32_t a = d - d + d;
+		myDelay();
 
 		pthread_mutex_lock(&mutex1);
 			thread_send(222, second_sensor);
